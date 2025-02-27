@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       openaiModels.forEach(option => option.style.display = 'none');
       googleModels.forEach(option => option.style.display = 'block');
-      modelSelect.value = 'gemini-pro';
+      modelSelect.value = 'gemini-1.5-flash';
     }
   });
   
@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Collect options
     const options = {
+      framework: frameworkSelect.value,
       generateMethods: generateMethodsCheckbox.checked,
       includeComments: includeCommentsCheckbox.checked,
       smartNaming: smartNamingCheckbox.checked,
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // Generate POM locally
           let pomCode = '';
           
-          if (options.framework === 'selenium') {
+          if (frameworkSelect.value === 'selenium') {
             pomCode = generateSeleniumPOM(domData, options);
           } else {
             pomCode = generatePlaywrightPOM(domData, options);
@@ -262,7 +263,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     prompt += `\nRequirements:\n`;
-    prompt += `- Follow best practices for ${framework} C# Page Object Models\n`;
+    
+    // Add framework-specific requirements
+    if (framework === 'selenium') {
+      prompt += `- Create a Selenium C# Page Object Model using OpenQA.Selenium namespace\n`;
+      prompt += `- Use IWebDriver and WebDriverWait in the constructor\n`;
+      prompt += `- Use private By fields for locators (e.g., private By ElementLocator => By.Id("elementId"))\n`;
+      prompt += `- Use public IWebElement properties that use FindElement\n`;
+      prompt += `- Include a WaitForPageToLoad method that uses WebDriverWait\n`;
+    } else {
+      prompt += `- Create a Playwright C# Page Object Model using Microsoft.Playwright namespace\n`;
+      prompt += `- Use IPage in the constructor\n`;
+      prompt += `- Use private string fields for selectors (e.g., private string ElementSelector => "#elementId")\n`;
+      prompt += `- Make all interaction methods async and return Task\n`;
+      prompt += `- Include a WaitForPageToLoadAsync method that uses WaitForLoadStateAsync\n`;
+    }
+    
     prompt += `- ${options.generateMethods ? 'Include interaction methods for elements' : 'Only include element locators'}\n`;
     prompt += `- ${options.includeComments ? 'Add comments explaining each element' : 'Keep comments minimal'}\n`;
     prompt += `- ${options.smartNaming ? 'Use intelligent, descriptive names for elements' : 'Use simple naming for elements'}\n`;
@@ -289,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert test automation engineer specializing in creating Page Object Models. Generate only the code without any explanation or markdown formatting.'
+            content: 'You are an expert test automation engineer specializing in creating Page Object Models. Generate only the code without any explanation or markdown formatting. Follow the specified framework requirements exactly.'
           },
           {
             role: 'user',
@@ -308,7 +324,11 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(data => {
       if (data.choices && data.choices.length > 0) {
-        const code = data.choices[0].message.content.trim();
+        let code = data.choices[0].message.content.trim();
+        
+        // Remove any code block markers that might have been added
+        code = code.replace(/```csharp|```cs|```c#|```/g, '').trim();
+        
         callback({ code: code });
       } else {
         callback({ error: 'Unexpected response format from OpenAI API' });
@@ -322,30 +342,59 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to call Google AI API
   function callGoogleAI(prompt, model, apiKey, callback) {
-    // Google Gemini API endpoint
-    const apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/';
-    const fullEndpoint = `${apiEndpoint}${model}:generateContent?key=${apiKey}`;
+    // Define the API endpoint and model name based on the selected model
+    let apiEndpoint;
+    let modelName;
     
-    fetch(fullEndpoint, {
+    // Map selected model to correct API model name
+    switch(model) {
+      case "gemini-1.5-flash":
+        modelName = "models/gemini-1.5-flash";
+        break;
+      case "gemini-pro":
+        modelName = "models/gemini-pro";
+        break;
+      case "gemini-ultra":
+        modelName = "models/gemini-ultra";
+        break;
+      default:
+        modelName = "models/gemini-pro"; // Fallback to gemini-pro
+    }
+    
+    // Construct the full API endpoint
+    apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
+    
+    console.log(`Calling Google AI API with model: ${modelName}`);
+    
+    // Prepare request body
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            {
+              text: "You are an expert test automation engineer specializing in creating Page Object Models. Generate only the code without any explanation or markdown formatting. Follow the specified framework requirements exactly."
+            },
+            {
+              text: prompt
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 4000,
+        topP: 0.8,
+        topK: 40
+      }
+    };
+    
+    // Make API call
+    fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 4000
-        }
-      })
+      body: JSON.stringify(requestBody)
     })
     .then(response => {
       if (!response.ok) {
@@ -355,9 +404,14 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(data => {
       if (data.candidates && data.candidates.length > 0) {
-        const text = data.candidates[0].content.parts[0].text;
+        let text = data.candidates[0].content.parts[0].text;
+        
+        // Remove any code block markers that might have been added
+        text = text.replace(/```csharp|```cs|```c#|```/g, '').trim();
+        
         callback({ code: text });
       } else {
+        console.error('Unexpected API response:', data);
         callback({ error: 'Unexpected response format from Google AI API' });
       }
     })

@@ -17,6 +17,23 @@
         </select>
       </div>
       
+      <div class="iframe-options">
+        <div class="option">
+          <input type="checkbox" id="analyze-iframe" name="analyze-iframe">
+          <label for="analyze-iframe">Analyze iframe</label>
+        </div>
+        
+        <div id="iframe-settings" class="iframe-settings" style="display: none;">
+          <div class="iframe-selection-btn">
+            <button id="select-iframe-button">Select iframe</button>
+          </div>
+          <div id="selected-iframe-info" class="selected-iframe-info" style="display: none;">
+            <div>Selected iframe: <span id="iframe-selector-display">None</span></div>
+            <input type="hidden" id="iframe-selector" value="">
+          </div>
+        </div>
+      </div>
+      
       <div class="api-options">
         <div class="option">
           <input type="checkbox" id="use-ai" name="use-ai">
@@ -47,6 +64,7 @@
               
               <!-- Google models -->
               <option class="google-model" value="gemini-pro" style="display: none;">Gemini Pro</option>
+              <option class="google-model" value="gemini-1.5-flash" style="display: none;">Gemini 1.5 Flash</option>
               <option class="google-model" value="gemini-ultra" style="display: none;">Gemini Ultra</option>
             </select>
           </div>
