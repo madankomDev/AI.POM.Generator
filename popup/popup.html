@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>POM Generator</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>POM Generator</h1>
+    
+    <div class="settings">
+      <div class="framework-selection">
+        <label for="framework">Select Framework:</label>
+        <select id="framework">
+          <option value="selenium">Selenium C#</option>
+          <option value="playwright">Playwright C#</option>
+        </select>
+      </div>
+      
+      <div class="api-options">
+        <div class="option">
+          <input type="checkbox" id="use-ai" name="use-ai">
+          <label for="use-ai">Use AI for enhanced POM generation</label>
+        </div>
+        
+        <div id="ai-settings" class="ai-settings" style="display: none;">
+          <div class="api-selection">
+            <label for="ai-provider">AI Provider:</label>
+            <select id="ai-provider">
+              <option value="openai">OpenAI</option>
+              <option value="google">Google Gemini</option>
+            </select>
+          </div>
+          
+          <div class="api-key">
+            <label for="api-key">API Key:</label>
+            <input type="password" id="api-key" placeholder="Enter your API key">
+          </div>
+          
+          <div class="model-selection">
+            <label for="model">Model:</label>
+            <select id="model">
+              <!-- OpenAI models -->
+              <option class="openai-model" value="gpt-4">GPT-4</option>
+              <option class="openai-model" value="gpt-4-turbo">GPT-4 Turbo</option>
+              <option class="openai-model" value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              
+              <!-- Google models -->
+              <option class="google-model" value="gemini-pro" style="display: none;">Gemini Pro</option>
+              <option class="google-model" value="gemini-ultra" style="display: none;">Gemini Ultra</option>
+            </select>
+          </div>
+          
+          <div class="save-key-option">
+            <input type="checkbox" id="save-api-key">
+            <label for="save-api-key">Save API key (stored locally only)</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="options">
+        <div class="option">
+          <input type="checkbox" id="generate-methods" checked>
+          <label for="generate-methods">Generate interaction methods</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="include-comments" checked>
+          <label for="include-comments">Include comments</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="smart-naming" checked>
+          <label for="smart-naming">Smart element naming</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="generate-button">Generate POM</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <div class="result-container" id="result-container" style="display: none;">
+      <div class="result-header">
+        <h3>Generated POM</h3>
+        <button id="copy-button">Copy to Clipboard</button>
+        <button id="download-button">Download</button>
+      </div>
+      <pre id="result-code"></pre>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
